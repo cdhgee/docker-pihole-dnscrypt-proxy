@@ -55,9 +55,9 @@
       src: files/docker-daemon.json
       dest: /etc/docker/daemon.json
     become: yes
-  - name: Disable systemd-resolved
-    ansible.builtin.systemd:
-      name: systemd-resolved
-      enabled: no
-      state: stopped
-    become: yes
+# - name: Disable systemd-resolved
+#   ansible.builtin.systemd:
+#     name: systemd-resolved
+#     enabled: no
+#     state: stopped
+#   become: yes
