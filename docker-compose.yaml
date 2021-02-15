@@ -1,0 +1,64 @@
+---
+version: "2.4"
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    environment:
+      TZ: "America/Chicago"
+      PIHOLE_DNS_: "${RESOLVER_IPv4}#53000;${RESOLVER_IPv6}#53000"
+      DNS_BOGUS_PRIV: "true"
+      DNS_FQDN_REQUIRED: "true"
+      REV_SERVER: "false"
+      IPv6: "true"
+      ServerIP: "${PIHOLE_IPv4}"
+      ServerIPv6: "${PIHOLE_IPv6}"
+      WEBPASSWORD: "${PIHOLE_PASSWORD}"
+      VIRTUAL_HOST: "${PIHOLE_FQDN}"
+    restart: unless-stopped
+    volumes:
+    - "./pihole/etc:/etc/pihole/"
+    - "./pihole/dnsmasq:/etc/dnsmasq.d/"
+    dns:
+    - "127.0.0.1"
+    - "::1"
+    - "1.1.1.1"
+    - "2606:4700:4700::1111"
+    ports:
+    - "53:53/tcp"
+    - "53:53/udp"
+    - "80:80/tcp"
+    networks:
+      pihole_net:
+        ipv4_address: "${PIHOLE_IPv4}"
+        ipv6_address: "${PIHOLE_IPv6}"
+  dnscrypt-proxy:
+    image: klutchell/dnscrypt-proxy:latest
+    container_name: dnscrypt-proxy
+    environment:
+      TZ: "America/Chicago"
+    restart: unless-stopped
+    volumes:
+    - "./dnscrypt-proxy/etc/:/config"
+    dns:
+    - "1.1.1.1"
+    - "2606:4700:4700::1111"
+    - "9.9.9.9"
+    - "2620:fe::fe"
+    ports:
+    - "53000:53000/tcp"
+    - "53000:53000/udp"
+    networks:
+      pihole_net:
+        ipv4_address: "${RESOLVER_IPv4}"
+        ipv6_address: "${RESOLVER_IPv6}"
+networks:
+  pihole_net:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: "${NETWORK_SUBNET_IPv4}"
+          gateway: "${NETWORK_GATEWAY_IPv4}"
+        - subnet: "${NETWORK_SUBNET_IPv6}"
+          gateway: "${NETWORK_GATEWAY_IPv6}"
