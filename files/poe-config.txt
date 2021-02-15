@@ -1,0 +1,4 @@
+
+# PoE Hat fan speeds
+dtparam=poe_fan_temp0=55000,poe_fan_temp0_hyst=5000,poe_fan_temp1=66000,poe_fan_temp1_hyst=5000
+dtparam=poe_fan_temp2=71000,poe_fan_temp2_hyst=5000,poe_fan_temp3=73000,poe_fan_temp3_hyst=5000
