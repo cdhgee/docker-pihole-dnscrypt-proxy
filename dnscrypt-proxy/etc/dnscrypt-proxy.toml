@@ -28,6 +28,9 @@ require_nolog = true
 # Server must not enforce its own blocklist (for parental control, ads blocking...)
 require_nofilter = true
 
+# Enable ECS using suitably masked subnets; replace with appropriate values and then enable
+# edns_client_subnet = ['1.2.0.0/16', '2001:db8::/32']
+
 [query_log]
   file = '/var/log/dnscrypt-proxy/query.log'
 
