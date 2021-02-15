@@ -1,0 +1,63 @@
+---
+- name: Machine configuration
+  hosts: localhost
+  vars:
+    ansible_become_method: sudo
+  tasks:
+  - name: Check for required information
+    ansible.builtin.fail:
+      msg: "{{ item }} is required"
+    when: lookup('vars', item, default='') == ''
+    loop:
+    - USERNAME
+    - NODENAME
+  - name: Add user account
+    ansible.builtin.user:
+      name: "{{ USERNAME }}"
+      groups: sudo
+      append: yes
+      generate_ssh_key: yes
+      create_home: yes
+      ssh_key_bits: 2048
+      ssh_key_file: .ssh/id_ed25519
+      ssh_key_type: ed25519
+      ssh_key_comment: "{{ USERNAME }}@{{ NODENAME }}"
+      skeleton: /etc/skel
+      shell: /bin/bash
+    become: yes
+  - name: Set the hostname
+    ansible.builtin.hostname:
+      name: "{{ NODENAME }}"
+    become: yes
+  - name: Install packages
+    ansible.builtin.apt:
+      name:
+      - docker.io
+      - docker-compose
+    become: yes
+  - name: Enable cgroup support
+    ansible.builtin.lineinfile:
+      path: /boot/firmware/cmdline.txt
+      regexp: "^(.*)$"
+      backrefs: yes
+      line: "\\1 cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1"
+    become: yes
+    when: lookup('file', '/boot/firmware/cmdline.txt').find('cgroup_enable') == -1
+  - name: Add POE hat fan temperature limit
+    ansible.builtin.blockinfile:
+      path: /boot/firmware/config.txt
+      insertafter: EOF
+      block: "{{ lookup('file', 'files/poe-config.txt') }}"
+    become: yes
+    when: lookup('file', '/boot/firmware/config.txt').find('dtparam=poe_fan_temp0') == -1
+  - name: Configure docker to use systemd cgroup driver
+    ansible.builtin.copy:
+      src: files/docker-daemon.json
+      dest: /etc/docker/daemon.json
+    become: yes
+  - name: Disable systemd-resolved
+    ansible.builtin.systemd:
+      name: systemd-resolved
+      enabled: no
+      state: stopped
+    become: yes
